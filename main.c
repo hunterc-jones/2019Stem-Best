@@ -5,7 +5,7 @@
 //a global boolean variable that represents the joystick that arcade-drive uses, if it is true, the arcade-drive uses the right joystick, if false, uses the left joystick.
 bool arcadeDriveJoystickRight = true;
 //a global boolean variable that represents which drive the robot is using, if it is true, then the robot is using the arcade drive mode, if it is false, then the robot is in tank drive mode.
-bool arcadeDrive = false;
+bool arcadeDrive = true;
 //global integer variables that allows the program to create, edit, and convert motor values without actually changing the motors until the end. This allows for a more module-based code, which is easier to manage and edit.
 int motorLeftInput = 0;
 int motorRightInput = 0;
@@ -31,7 +31,7 @@ int NonLinearDrive(int motorInput){
 	}else if(motorInput < 0){
 		//non-linear conversion equation for converting a negative linear motor value to a negative non-linear motor value.
 		//nonLinearMotor = pow(-2, (float)(-log(127)) / ((float)(126 * log(2)) * motorInput)) + 1;
-		nonLinearMotor = pow(-2, (-7 * motorInput / 127)) + 1;
+		nonLinearMotor = -pow(2, (-7 * motorInput / 127)) + 1;
 	}else{
 		//equation for setting the non-linear motor value to zero, if the linear motor value is also zero. Without this, the motor value would be zero when the joystick isn't moving and the machine would move forward.
 		nonLinearMotor = 0;
