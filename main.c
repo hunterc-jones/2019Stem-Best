@@ -158,12 +158,16 @@ void Drive(){
 		//Runs the TankDrive function
 		TankDrive();
 	}
+	//The two statements below take the motorInput variables, and passes them through each of the modification functions in a specific order. First the values will run through the DeadBand function, next the linear value is converted to a non-linear one in the NonLinear function. Lastly, the precision of the value will be increased and the motorInput values will then be put into the actual motors themselves.
+	motor[motorLeft] = ApplyPrecision(NonLinearDrive(DeadBand(motorLeftInput)));
+	motor[motorRight] = ApplyPrecision(NonLinearDrive(DeadBand(motorRightInput)));
 }
 
 
 task main() //This is the task that is called when the robot starts the program.
 {
 	while(true) { //This is the main loop, everything that is updated continuously will go in here.
+		PrecisionToggle();
 		Drive();
 	}
 }
