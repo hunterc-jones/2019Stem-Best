@@ -137,34 +137,36 @@ task main()
 
 		// Main Robot Operating Logic
 		if (testing == false) {	// if not testing
+
+
 			// 1-Joystick Arcade Drive
-			if (arcadeDrive) {
-				if (abs(vexRT[Ch3] + vexRT[Ch4]) > deadband) {
-					motor[left] = vexRT[Ch3] + vexRT[Ch4];
-				} else {
-					motor[left] = 0;
-				}
-				if (abs((-vexRT[Ch3]) + vexRT[Ch4]) > deadband) {
-					motor[right] = -vexRT[Ch3] +vexRT[Ch4];		// + - symbols are flipped is to reverse the right motor
-				} else {
-					motor[right] = 0;
-				}
-			}
+void ArcadeDrive(){
+	if (abs(vexRT[Ch3] + vexRT[Ch4]) > deadband) {
+		motor[left] = vexRT[Ch3] + vexRT[Ch4];
+	} else {
+		motor[left] = 0;
+	}
+	if (abs((-vexRT[Ch3]) + vexRT[Ch4]) > deadband) {
+		motor[right] = -vexRT[Ch3] +vexRT[Ch4];		// + - symbols are flipped is to reverse the right motor
+	} else {
+		motor[right] = 0;
+	}
+}
 
 
 			// 2-Joystick Tank Drive
-			else {
-				if (abs(vexRT[Ch3]) > deadband) {
-					motor[left] = vexRT[Ch3];
-				} else {
-					motor[left] = 0;
-				}
-				if (abs(vexRT[Ch2]) > deadband) {
-					motor[right] = -vexRT[Ch2];	// keep in mind this is to reverse the right motor
-				} else {
-					motor[right] = 0;
-				}
-			}
+void TankDrive(){
+	if (abs(vexRT[Ch3]) > deadband) {
+		motor[left] = vexRT[Ch3];
+	} else {
+		motor[left] = 0;
+	}
+	if (abs(vexRT[Ch2]) > deadband) {
+		motor[right] = -vexRT[Ch2];	// keep in mind this is to reverse the right motor
+	} else {
+		motor[right] = 0;
+	}
+}
 
 
 			// 2-Btn Wrist Servo Turning
