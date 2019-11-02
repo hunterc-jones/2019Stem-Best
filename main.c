@@ -61,36 +61,36 @@ void ArcadeDrive(){
 // 2-Joystick Tank Drive
 void TankDrive(){
 	if (abs(vexRT[Ch3]) > deadband) {		// Checks if left joystick value is outside of deadband
-		motor[left] = vexRT[Ch3];					// converts left joystick value to left motor value if it is
+		motor[left] = vexRT[Ch3];					// Converts left joystick value to left motor value if it is
 	} else {
-		motor[left] = 0;									// sets the left motor to zero if it isn't
+		motor[left] = 0;									// Sets the left motor to zero if it is not
 	}
-	if (abs(vexRT[Ch2]) > deadband) {
-		motor[right] = -vexRT[Ch2];	// keep in mind this is to reverse the right motor
+	if (abs(vexRT[Ch2]) > deadband) {		// Checks if the right joystick vale is outside of deadband
+		motor[right] = -vexRT[Ch2];				// Converts right joystick value to right motor value if it is (negative for right motor)
 	} else {
-		motor[right] = 0;
+		motor[right] = 0;									// Sets the right motor to zero if it is not
 	}
 }
 
 // 2-btn Arm Motor Control
 void Arm(){
-	if (vexRT[Btn8D]) {
-		motor[arm] = 127.0;
-	} else if (vexRT[Btn8U]) {
-		motor[arm] = -127;
+	if (vexRT[Btn8D]) {					// Checks if the bottom button on the right side of the controller is being pressed
+		motor[arm] = 127.0;				// Sets the arm servo to full power if the button is being pressed
+	} else if (vexRT[Btn8U]) {	// Checks if the top button on the right side of the controller is being pressed instead
+		motor[arm] = -127;				// Sets the arm servo to full reverse power if the button is being pressed
 	} else {
-		motor[arm] = 0;
+		motor[arm] = 0;						// If neither button is being pressed, the arm servo is set to 0 and stops moving
 	}
 }
 
 // 2-Btn Conduit Motor Control
 void Conduit(){
-	if (vexRT[Btn5U]) {
-		motor[condAct] = 90;
-	} else if (vexRT[Btn6U]) {
-		motor[condAct] = -90;
+	if (vexRT[Btn5U]) {					// Checks if the upper left trigger button on the controller is being pressed
+		motor[condAct] = 90;			// Sets the conduit servo to 70% power if the button is being pressed
+	} else if (vexRT[Btn6U]) {	// Checks if the upper right trigger button is being pressed instead
+		motor[condAct] = -90;			// Sets the conduit servo to 70% reverse power if the button is being pressed
 	} else {
-		motor[condAct] = 0;
+		motor[condAct] = 0;				// If neither button is being pressed, the conduit servo is set to 0 and stops moving.
 	}
 }
 
