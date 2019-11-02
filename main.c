@@ -107,14 +107,14 @@ void EndConstControls() {
 
 void Arcade() {
 	if (abs(vexRT[Ch3] - vexRT[Ch4]) > deadband) {
-		motor[left] = vexRT[Ch3] - vexRT[Ch4];
-	} else {
-		motor[left] = 0;
-	}
-	if (abs(vexRT[Ch3] + vexRT[Ch4]) > deadband) {
-		motor[right] = vexRT[Ch3] + vexRT[Ch4];
+		motor[right] = vexRT[Ch3] - vexRT[Ch4];
 	} else {
 		motor[right] = 0;
+	}
+	if (abs(vexRT[Ch4] + vexRT[Ch3]) > deadband) {
+		motor[left] = vexRT[Ch4] + vexRT[Ch3];
+	} else {
+		motor[left] = 0;
 	}
 	ConstControls(); //Called at the end of arcade inorder to do functions like arm movements
 }
@@ -148,7 +148,7 @@ float MotorCheck(float speed, float min, float max, float change) {
 }
 
 void Auto() {
-	if (sensorCheck(SensorValue[AutoCheck])) {
+	if (false)/*sensorCheck(SensorValue[AutoCheck]))*/ {
 		pathFinished = true;
 		motor[left] = 0;
 		motor[right] = 0;
