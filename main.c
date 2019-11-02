@@ -139,14 +139,14 @@ task main()
 		if (testing == false) {	// if not testing
 
 
-			// 1-Joystick Arcade Drive
+// 1-Joystick Arcade Drive
 void ArcadeDrive(){
-	if (abs(vexRT[Ch3] + vexRT[Ch4]) > deadband) {
-		motor[left] = vexRT[Ch3] + vexRT[Ch4];
+	if (abs(vexRT[Ch3] + vexRT[Ch4]) > deadband) {	// checks if joystick value is outside of deadband
+		motor[left] = vexRT[Ch3] + vexRT[Ch4];				// converts joystick value to the left motor if it is
 	} else {
-		motor[left] = 0;
+		motor[left] = 0;															// sets the left motor to zero if it isn't
 	}
-	if (abs((-vexRT[Ch3]) + vexRT[Ch4]) > deadband) {
+	if (abs((-vexRT[Ch3]) + vexRT[Ch4]) > deadband) {	// does the same for the other side of the joystick and the other motor
 		motor[right] = -vexRT[Ch3] +vexRT[Ch4];		// + - symbols are flipped is to reverse the right motor
 	} else {
 		motor[right] = 0;
@@ -154,12 +154,12 @@ void ArcadeDrive(){
 }
 
 
-			// 2-Joystick Tank Drive
+// 2-Joystick Tank Drive
 void TankDrive(){
-	if (abs(vexRT[Ch3]) > deadband) {
-		motor[left] = vexRT[Ch3];
+	if (abs(vexRT[Ch3]) > deadband) {		// Checks if left joystick value is outside of deadband
+		motor[left] = vexRT[Ch3];					// converts left joystick value to left motor value if it is
 	} else {
-		motor[left] = 0;
+		motor[left] = 0;									// sets the left motor to zero if it isn't
 	}
 	if (abs(vexRT[Ch2]) > deadband) {
 		motor[right] = -vexRT[Ch2];	// keep in mind this is to reverse the right motor
@@ -168,8 +168,7 @@ void TankDrive(){
 	}
 }
 
-
-			// 2-Btn Wrist Servo Turning
+// 2-Btn Wrist Servo Turning
 			if (vexRT[Btn7R] && !minus90WristDegBtnPressed) {
 				wristServoPos--;
 				ChangeWristServoPos();
@@ -188,14 +187,16 @@ void TankDrive(){
 			}
 
 
-			// 2-btn Arm Motor Control
-			if (vexRT[Btn8D]) {
-				motor[arm] = 127.0;
-			} else if (vexRT[Btn8U]) {
-				motor[arm] = -127;
-			} else {
-				motor[arm] = 0;
-			}
+// 2-btn Arm Motor Control
+void Arm(){
+	if (vexRT[Btn8D]) {
+		motor[arm] = 127.0;
+	} else if (vexRT[Btn8U]) {
+		motor[arm] = -127;
+	} else {
+		motor[arm] = 0;
+	}
+}
 
 
 			// 2-Btn Servo Claw Control
@@ -214,14 +215,16 @@ void TankDrive(){
 			}
 
 
-			// 2-Btn Conduit Motor Control
-			if (vexRT[Btn5U]) {
-				motor[condAct] = condActMotorSpeed;
-			} else if (vexRT[Btn6U]) {
-				motor[condAct] = -condActMotorSpeed;
-			} else {
-				motor[condAct] = 0;
-			}
+// 2-Btn Conduit Motor Control
+void Conduit(){
+	if (vexRT[Btn5U]) {
+		motor[condAct] = 90;
+	} else if (vexRT[Btn6U]) {
+		motor[condAct] = -90;
+	} else {
+		motor[condAct] = 0;
+	}
+}
 
 
 			// 2-IR Sensor Autonomous Drive
