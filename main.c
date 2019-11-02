@@ -61,7 +61,7 @@ void Wrist() {
 }
 
 void Claw() {
-	if (vexRT[Btn7L] && clawBtnPressed == false) {
+	if (vexRT[Btn7U] && clawBtnPressed == false) {
 		if (clawOpen) {
 			motor[claw] = -127;
 			clawOpen = false;
@@ -71,15 +71,15 @@ void Claw() {
 			clawOpen = true;
 			clawBtnPressed = true;
 		}
-	} else if (!vexRT[Btn8L] && clawBtnPressed) {
+	} else if (!vexRT[Btn7U] && clawBtnPressed) {
 		clawBtnPressed = false;
 	}
 }
 
 void Arm() {
-	if (vexRT[Btn8D]) {
+	if (vexRT[Btn6D]) {
 		motor[arm] = 127.0;
-	} else if (vexRT[Btn8U]) {
+	} else if (vexRT[Btn6U]) {
 		motor[arm] = -127;
 	} else {
 		motor[arm] = 0;
