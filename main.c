@@ -107,12 +107,11 @@ void Arm() {
 		elbowPot = SensorValue[elbowPotSensor];
 
 		if (deployElbow) {
-			elbowCheck = false;
-			//motorOutput = (elbowPot - 2716) /12;
-			motor[elbow] = (elbowPot - 2716) /12;
+			elbowCheck = false; //This var is used to turn the motor off after the elbow returns to default state to save battery.
+			motor[elbow] = (elbowPot - 2716) /12; //This uses a variable difference concept, the further the elbow is from the target, the faster it moves twards it.
 		} else {
-			if (!elbowCheck) {
-				if (elbowPot> 1000) {
+			if (!elbowCheck) { //If the elbow has not yet been returned to the
+				if (elbowPot> 1000) { //Used to slow the motor down so it dosen't slam into the robot
 					motor[elbow] = -15;
 				} else {
 					motor[elbow] = 8;
