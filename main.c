@@ -142,7 +142,7 @@ void Tank() {
 
 //Begin auto functions
 bool sensorCheck(long sens) {
-	return (sens < 0.8);
+	return (sens < 0.5);
 }
 float MotorCheck(float speed, float min, float max, float change) {
 	speed += change;
