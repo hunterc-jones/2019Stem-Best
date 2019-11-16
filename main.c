@@ -1,10 +1,12 @@
+#pragma config(Sensor, in2,    elbowPotSensor, sensorPotentiometer)
 #pragma config(Sensor, dgtl2,  LeftSensor,     sensorDigitalIn)
 #pragma config(Sensor, dgtl6,  MidSensor,      sensorDigitalIn)
 #pragma config(Sensor, dgtl10, AutoCheck,      sensorTouch)
 #pragma config(Sensor, dgtl12, RightSensor,    sensorDigitalIn)
-#pragma config(Motor,  port2,           left,          tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port2,           left,          tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           arm,           tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port5,           right,         tmotorVex393_MC29, openLoop, reversed)
+#pragma config(Motor,  port4,           elbow,         tmotorVex393_MC29, openLoop, reversed)
+#pragma config(Motor,  port5,           right,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port6,           wrist,         tmotorServoStandard, openLoop)
 #pragma config(Motor,  port7,           condAct,       tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           claw,          tmotorServoStandard, openLoop)
@@ -23,13 +25,19 @@ float increment = 0.05;
 bool pathFinished = false;
 //End IR Variables
 
+//Control Foundation Variables
 int driveMode = 0;
+
+//Arm Subsystem Controls
 int wristServoPos = 1;
-float deadband = 1.0;
 bool clawOpen = false;
 bool clawBtnPressed = false;
 bool minus90WristDegBtnPressed = false;
 bool plus90WristDegBtnPressed = false;
+float elbowPot = 0.0;
+bool deployElbow = false;
+bool elbowCheck = true;
+float deadband = 1.0;
 
 void ChangeWristServoPos() {
 	if (wristServoPos < 0) {
@@ -93,6 +101,27 @@ void Arm() {
 	} else {
 		motor[arm] = 0;
 	}
+	if (vexRT[Btn5U]) deployElbow = true;
+		if (vexRT[Btn5D]) deployElbow = false;
+
+		elbowPot = SensorValue[elbowPotSensor];
+
+		if (deployElbow) {
+			elbowCheck = false;
+			//motorOutput = (elbowPot - 2716) /12;
+			motor[elbow] = (elbowPot - 2716) /12;
+		} else {
+			if (!elbowCheck) {
+				if (elbowPot> 1000) {
+					motor[elbow] = -15;
+				} else {
+					motor[elbow] = 8;
+				}
+				elbowCheck = elbowPot - 4094 > -20;
+			} else {
+				motor[elbow] = 0;
+			}
+		}
 }
 
 void ConstControls() {
@@ -148,6 +177,9 @@ float MotorCheck(float speed, float min, float max, float change) {
 }
 
 void Auto() {
+	sensorLeft = SensorValue[LeftSensor];
+	sensorRight = SensorValue[RightSensor];
+
 	if (false)/*sensorCheck(SensorValue[AutoCheck]))*/ {
 		pathFinished = true;
 		motor[left] = 0;
@@ -166,6 +198,27 @@ void Auto() {
 	  } else {		// If neither are detecting white
 	  	LeftSpeed = MotorCheck(LeftSpeed, MinSpeed, MaxSpeed, -increment);
 	  	RightSpeed = MotorCheck(RightSpeed, MinSpeed, MaxSpeed, -increment);
+		}
+		motor[left] = LeftSpeed * 127;
+		motor[right] = RightSpeed * 127;
+	}
+}
+
+void SingleAuto() {
+	sensorLeft = SensorValue[LeftSensor];
+	sensorRight = SensorValue[RightSensor];
+	if (false)/*sensorCheck(SensorValue[AutoCheck]))*/ {
+		pathFinished = true;
+		motor[left] = 0;
+		motor[right] = 0;
+		driveMode = 3;
+	} else {
+		if (sensorCheck(sensorLeft)) {
+	  	LeftSpeed = MotorCheck(LeftSpeed, MinSpeed, MaxSpeed, increment);
+	  	RightSpeed = MotorCheck(RightSpeed, MinSpeed, MaxSpeed, -increment);
+		} else {
+			LeftSpeed = MotorCheck(LeftSpeed, MinSpeed, MaxSpeed, -increment);
+	  	RightSpeed = MotorCheck(RightSpeed, MinSpeed, MaxSpeed, increment);
 		}
 		motor[left] = LeftSpeed * 127;
 		motor[right] = RightSpeed * 127;
@@ -192,7 +245,8 @@ task main() {
 				Tank();
 				break;
 			case 2:
-				Auto();
+				//Auto();
+				SingleAuto();
 				break;
 			case 3:
 				finishedLine();
