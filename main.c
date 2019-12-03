@@ -24,9 +24,6 @@ Arm Motor
 
 */
 
-// ARM control = up/down LEFT gamepad btns
-// CLAW control = left/right RIGHT gamepad btns
-
 // Autonomous Vars
 bool StartingPathFound = false;
 long sensorLeft;
