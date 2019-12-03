@@ -53,7 +53,7 @@ float deadband = 1.0;					// CONFIG VAL to reduce deadband
 // Arm, Claw, Rake Vars
 bool clawToggle;
 bool plusThetaClawBtnPressed = false;
-int clawAngleClose = -127;
+int clawAngleClose = -120;
 int clawAngleOpen = -30;
 /*
 bool deployElbow = false;
