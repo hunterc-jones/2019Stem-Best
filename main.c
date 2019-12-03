@@ -4,7 +4,6 @@
 #pragma config(Sensor, dgtl12, RightSensor,    sensorDigitalIn)
 #pragma config(Motor,  port2,           left,          tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port3,           arm,           tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port4,           elbow,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port5,           right,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port6,           claw,          tmotorServoStandard, openLoop)
 #pragma config(Motor,  port7,           rake,          tmotorServoStandard, openLoop)
@@ -43,15 +42,16 @@ int pushRodReleaseAngle = 80;
 
 // Basis Vars
 int driveMode = 0;
+int rememberWheelDrive;
+bool arcadeToggle = true;		// DEFAULT = TANK
 bool setupComplete = false;
 bool arcadeBtnPressed = false;
-bool tankBtnPressed = false;
 bool mainautoBtnPressed = false;
 bool AlternateAutoBtnPressed = false;
 float deadband = 1.0;					// CONFIG VAL to reduce deadband
 
 // Arm, Claw, Rake Vars
-bool minusThetaClawBtnPressed = false;
+bool clawToggle;
 bool plusThetaClawBtnPressed = false;
 int clawAngleClose = -127;
 int clawAngleOpen = -30;
@@ -74,45 +74,51 @@ void InitRobot() {
 		setupComplete = true;
 	}
 }
+
 void CheckDriveModes() {
 	if (vexRT[Btn8U] && !arcadeBtnPressed) {
-		driveMode = 0;
+		if (driveMode!=0&&driveMode!=1) {			// if not already in tank or arcade
+			driveMode = rememberWheelDrive;
+		} else if (driveMode==0||driveMode==1) {		// if already in tank or arcade
+			if (arcadeToggle == true) {
+				driveMode = 0;		// Arcade drivemode
+				arcadeToggle = false;
+			} else if (arcadeToggle == false) {
+				driveMode = 1;		// Tank drivemode
+				arcadeToggle = true;
+			}
+		}
+		rememberWheelDrive = driveMode;
 		arcadeBtnPressed = true;
 	} else if (!vexRT[Btn8U]) {
 		arcadeBtnPressed = false;
 	}
-	if (vexRT[Btn8D] && !tankBtnPressed) {
-		driveMode = 1;
-		tankBtnPressed = true;
-	} else if (!vexRT[Btn8D]) {
-		tankBtnPressed = false;
-	}
-	if ((vexRT[Btn7U] && !mainautoBtnPressed) && (!vexRT[Btn8D])) {
+	if (    (vexRT[Btn7L]&&vexRT[Btn7R])    &&    (  (!mainautoBtnPressed && !vexRT[Btn7U])  &&  !vexRT[Btn7D])    ) {
 		driveMode = 2;
 		mainautoBtnPressed = true;
-	} else if (!vexRT[Btn7U]) {
+	} else if (!vexRT[Btn7L]&&!vexRT[Btn7R]) {
 		mainautoBtnPressed = false;
 	}
-	if ((vexRT[Btn7D] && !AlternateAutoBtnPressed) && (vexRT[Btn7U])) {
+	if (	(vexRT[Btn7U]&&vexRT[Btn7D])	&&	(	(!mainautoBtnPressed && !vexRT[Btn7L])	&&!vexRT[Btn7R])	) {
 		driveMode = 3;
 		AlternateAutoBtnPressed = true;
-	} else if (!vexRT[Btn7D]) {
+	} else if (!vexRT[Btn7U]&&!vexRT[Btn7D]) {
 		AlternateAutoBtnPressed = false;
 	}
 }
 
 void Claw() {
-	if (vexRT[Btn5D] && !minusThetaClawBtnPressed) {
-		motor[claw] = clawAngleClose;
-		minusThetaClawBtnPressed = true;
-	} else if (!vexRT[Btn5D]) {
-		plusThetaClawBtnPressed = false;
-	}
 	if (vexRT[Btn5U] && !plusThetaClawBtnPressed) {
-		motor[claw] = clawAngleOpen;
+		if (clawToggle == true) {
+			motor[claw] = clawAngleOpen;
+			clawToggle = false;
+		} else if (!clawToggle) {
+			motor[claw] = clawAngleClose;
+			clawToggle = true;
+		}
 		plusThetaClawBtnPressed = true;
 	} else if (!vexRT[Btn5U]) {
-		minusThetaClawBtnPressed = false;
+		plusThetaClawBtnPressed = false;
 	}
 }
 void Arm() {		// function for arm and elbow (elbow if configured for Corbin's design)
@@ -151,14 +157,14 @@ void Arm() {		// function for arm and elbow (elbow if configured for Corbin's de
 	*/
 }
 void Rake() {
-	if (vexRT[Btn8L] && !rakeBtnPressed) {
+	if (vexRT[Btn8D] && !rakeBtnPressed) {
 		if (rakeToggle == true) {
 			rakeToggle = false;
 		} else if (rakeToggle == false) {
 			rakeToggle = true;
 		}
 		rakeBtnPressed = true;
-	} else if (!vexRT[Btn8L]) {
+	} else if (!vexRT[Btn8D]) {
 		rakeBtnPressed = false;
 	}
 	if (rakeToggle) motor[rake] = rakeAngle1;
@@ -257,6 +263,10 @@ void MainAuto() {
 			motor[right] = RightSpeed * 127;
 		}
 	}
+}
+
+void ShakeTheFeckOut() {
+	// motors left, right, arm, pushrod, rake,
 }
 
 
