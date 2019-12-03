@@ -67,6 +67,20 @@ bool rakeToggle = true;
 int rakeAngle1 = 0;
 int rakeAngle2 = 127;
 
+// Random 'ShakeTheCrapOutOfRobot' Stuff
+int leftMotorVal;
+int rightMotorVal;
+int armMotorVal;
+int pushrodServoVal;
+int rakeServoVal;
+int clawServoVal;
+bool shakeOutBtnPressed = false;
+bool shakeToggle = false;
+
+
+
+
+
 void InitRobot() {
 	if (!setupComplete) {
 		motor[claw] = clawAngleOpen;	// min 40, max -120
@@ -76,6 +90,8 @@ void InitRobot() {
 }
 
 void CheckDriveModes() {
+	// UP btn on RIGHT gamepad
+		// Activate arcade or tank
 	if (vexRT[Btn8U] && !arcadeBtnPressed) {
 		if (driveMode!=0&&driveMode!=1) {			// if not already in tank or arcade
 			driveMode = rememberWheelDrive;
@@ -93,6 +109,8 @@ void CheckDriveModes() {
 	} else if (!vexRT[Btn8U]) {
 		arcadeBtnPressed = false;
 	}
+	// LEFT/RIGHT btns on LEFT gamepad,	UP/DOWN btns on LEFT gamepad
+		// Activate main auto or Ralsty auto
 	if (    (vexRT[Btn7L]&&vexRT[Btn7R])    &&    (  (!mainautoBtnPressed && !vexRT[Btn7U])  &&  !vexRT[Btn7D])    ) {
 		driveMode = 2;
 		mainautoBtnPressed = true;
@@ -104,6 +122,36 @@ void CheckDriveModes() {
 		AlternateAutoBtnPressed = true;
 	} else if (!vexRT[Btn7U]&&!vexRT[Btn7D]) {
 		AlternateAutoBtnPressed = false;
+	}
+}
+
+int genRandVal(int motorVal) {
+	motorVal = random(255);		// because (127*2) + 1 to account for exclusion
+	return (motorVal-127);		// to half range, since random() can only gen positive range
+}
+
+void ShakeParty() {
+	// if LEFT AND RIGHT btns on RIGHT gamepad are pressed while all other RIGHT gamepad btns are not being pressed (in case by accident)
+	if (vexRT[Btn8L]&&vexRT[Btn8R]&&!shakeOutBtnPressed&&!vexRT[Btn8U]&&!vexRT[Btn8D]) {
+		// toggle to SHAKE or NOT SHAKE
+		if (!shakeToggle) shakeToggle=true;
+		if (shakeToggle) shakeToggle=false;
+		shakeOutBtnPressed = true;
+	} else if (!vexRT[Btn8L]&&!vexRT[Btn8R]) {
+		shakeOutBtnPressed = false;
+	}
+	if (shakeToggle == true) {
+		srand(2378);		// random value of BEST
+
+		//Motors
+		motor[left] = genRandVal(leftMotorVal);
+		motor[arm] = genRandVal(rightMotorVal);
+		motor[right] = genRandVal(armMotorVal);
+
+		//Servos
+		motor[claw] = genRandVal(pushrodServoVal);
+		motor[rake] = genRandVal(rakeServoVal);
+		motor[pushRod] = genRandVal(clawServoVal);
 	}
 }
 
@@ -174,6 +222,7 @@ void ManualControls() {
 	Arm();
 	Claw();
 	Rake();
+	ShakeParty();
 }
 void Arcade() {
 	InitRobot();
@@ -263,10 +312,6 @@ void MainAuto() {
 			motor[right] = RightSpeed * 127;
 		}
 	}
-}
-
-void ShakeTheFeckOut() {
-	// motors left, right, arm, pushrod, rake,
 }
 
 
