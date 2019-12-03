@@ -51,13 +51,10 @@ bool AlternateAutoBtnPressed = false;
 float deadband = 1.0;					// CONFIG VAL to reduce deadband
 
 // Arm, Claw, Rake Vars
-int clawPos = 0;
-int clawDefaultTheta = 45;		// CONFIG VAL		for setting the default/starting position of the claw servo
-int theta = 59;								// CONFIG VAL		for setting int increment made to servo to turn just one cable slot
-int minClawPos = 0;
-int maxClawPos = 3;
 bool minusThetaClawBtnPressed = false;
 bool plusThetaClawBtnPressed = false;
+int clawAngleClose = -127;
+int clawAngleOpen = -30;
 /*
 bool deployElbow = false;
 float elbowPot = 0.0;
@@ -72,7 +69,7 @@ int rakeAngle2 = 127;
 
 void InitRobot() {
 	if (!setupComplete) {
-		motor[claw] = clawDefaultTheta;	// min 40, max -120
+		motor[claw] = clawAngleOpen;	// min 40, max -120
 		motor[pushRod] = pushRodSetupAngle;
 		setupComplete = true;
 	}
@@ -103,15 +100,16 @@ void CheckDriveModes() {
 		AlternateAutoBtnPressed = false;
 	}
 }
+
 void Claw() {
 	if (vexRT[Btn5D] && !minusThetaClawBtnPressed) {
-		motor[claw] = -127;
+		motor[claw] = clawAngleClose;
 		minusThetaClawBtnPressed = true;
 	} else if (!vexRT[Btn5D]) {
 		plusThetaClawBtnPressed = false;
 	}
 	if (vexRT[Btn5U] && !plusThetaClawBtnPressed) {
-		motor[claw] = -30;
+		motor[claw] = clawAngleOpen;
 		plusThetaClawBtnPressed = true;
 	} else if (!vexRT[Btn5U]) {
 		minusThetaClawBtnPressed = false;
