@@ -1,10 +1,9 @@
-#pragma config(Sensor, in2,    elbowPotSensor, sensorPotentiometer)
 #pragma config(Sensor, dgtl2,  LeftSensor,     sensorDigitalIn)
 #pragma config(Sensor, dgtl10, AutoCheck,      sensorTouch)
 #pragma config(Sensor, dgtl12, RightSensor,    sensorDigitalIn)
-#pragma config(Motor,  port2,           left,          tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port2,           left,          tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           arm,           tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port5,           right,         tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port5,           right,         tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port6,           claw,          tmotorServoStandard, openLoop)
 #pragma config(Motor,  port7,           rake,          tmotorServoStandard, openLoop)
 #pragma config(Motor,  port9,           pushRod,       tmotorServoStandard, openLoop)
@@ -24,6 +23,31 @@ Arm Motor
 
 */
 
+// ARM control = up/down LEFT gamepad btns
+// CLAW control = left/right RIGHT gamepad btns
+
+// Joystick Control Vars
+short RightBumpUpBtn = Btn6U;
+short RightBumpDownBtn = Btn6D;
+
+short ActArcadeTankBtn = Btn8U;
+short ActMainAutoBtn1 = Btn7L;
+short ActMainAutoBtn2 = Btn7R;
+short ActAltAutoBtn1 = Btn7U;
+short ActAltAutoBtn2 = Btn7D;
+short ActShakeBtn1 = Btn8L;
+short ActShakeBtn2 = Btn8R;
+
+short ToggleRakeBtn = Btn8D;
+short ToggleClawBtn = Btn5U;
+
+short ArcadeAxisY = Ch3;
+short ArcadeAxisX = Ch4;
+
+short TankLeftY = Ch3;
+short TankRightY = Ch2;
+
+
 // Autonomous Vars
 bool StartingPathFound = false;
 long sensorLeft;
@@ -34,12 +58,13 @@ float increment = 0.01;				// CONFIG VAL		for setting the speed robot makes each
 float MinSpeed = -MaxSpeed;
 float LeftSpeed;
 float RightSpeed;
-int pushRodSetupAngle = -7;
+int pushRodCloseAngle = -7;
 int pushRodReleaseAngle = 80;
 
 // Basis Vars
 int driveMode = 0;
 int rememberWheelDrive;
+//int InitDriverMotorFowardTime = 3000;			// CONFIG VAL									3 seconds (3000 ms)
 bool arcadeToggle = true;		// DEFAULT = TANK
 bool setupComplete = false;
 bool arcadeBtnPressed = false;
@@ -61,8 +86,8 @@ int elbowDownSpeed = 0.5;
 */
 bool rakeBtnPressed = false;
 bool rakeToggle = true;
-int rakeAngle1 = 0;
-int rakeAngle2 = 127;
+int rakeAngleClose = 0;
+int rakeAngleOpen = 127;
 
 // Random 'ShakeTheCrapOutOfRobot' Stuff
 int leftMotorVal;
@@ -81,15 +106,14 @@ bool shakeToggle = false;
 void InitRobot() {
 	if (!setupComplete) {
 		motor[claw] = clawAngleOpen;	// min 40, max -120
-		motor[pushRod] = pushRodSetupAngle;
+		motor[pushRod] = pushRodCloseAngle;
 		setupComplete = true;
 	}
 }
 
 void CheckDriveModes() {
-	// UP btn on RIGHT gamepad
 		// Activate arcade or tank
-	if (vexRT[Btn8U] && !arcadeBtnPressed) {
+	if (vexRT[ActArcadeTankBtn] && !arcadeBtnPressed) {
 		if (driveMode!=0&&driveMode!=1) {			// if not already in tank or arcade
 			driveMode = rememberWheelDrive;
 		} else if (driveMode==0||driveMode==1) {		// if already in tank or arcade
@@ -103,21 +127,20 @@ void CheckDriveModes() {
 		}
 		rememberWheelDrive = driveMode;
 		arcadeBtnPressed = true;
-	} else if (!vexRT[Btn8U]) {
+	} else if (!vexRT[ActArcadeTankBtn]) {
 		arcadeBtnPressed = false;
 	}
-	// LEFT/RIGHT btns on LEFT gamepad,	UP/DOWN btns on LEFT gamepad
 		// Activate main auto or Ralsty auto
-	if (    (vexRT[Btn7L]&&vexRT[Btn7R])    &&    (  (!mainautoBtnPressed && !vexRT[Btn7U])  &&  !vexRT[Btn7D])    ) {
+	if (    (vexRT[ActMainAutoBtn1]&&vexRT[ActMainAutoBtn2])    &&    (  (!mainautoBtnPressed && !vexRT[ActAltAutoBtn1])  &&  !vexRT[ActAltAutoBtn2])    ) {
 		driveMode = 2;
 		mainautoBtnPressed = true;
-	} else if (!vexRT[Btn7L]&&!vexRT[Btn7R]) {
+	} else if (!vexRT[ActMainAutoBtn1]&&!vexRT[ActMainAutoBtn2]) {
 		mainautoBtnPressed = false;
 	}
-	if (	(vexRT[Btn7U]&&vexRT[Btn7D])	&&	(	(!mainautoBtnPressed && !vexRT[Btn7L])	&&!vexRT[Btn7R])	) {
+	if (	(vexRT[ActAltAutoBtn1]&&vexRT[ActAltAutoBtn2])	&&	(	(!AlternateAutoBtnPressed && !vexRT[ActMainAutoBtn1])	&&!vexRT[ActMainAutoBtn2])	) {
 		driveMode = 3;
 		AlternateAutoBtnPressed = true;
-	} else if (!vexRT[Btn7U]&&!vexRT[Btn7D]) {
+	} else if (!vexRT[ActAltAutoBtn1]&&!vexRT[ActAltAutoBtn2]) {
 		AlternateAutoBtnPressed = false;
 	}
 }
@@ -129,12 +152,12 @@ int genRandVal(int motorVal) {
 
 void ShakeParty() {
 	// if LEFT AND RIGHT btns on RIGHT gamepad are pressed while all other RIGHT gamepad btns are not being pressed (in case by accident)
-	if (vexRT[Btn8L]&&vexRT[Btn8R]&&!shakeOutBtnPressed&&!vexRT[Btn8U]&&!vexRT[Btn8D]) {
+	if (vexRT[ActShakeBtn1]&&vexRT[ActShakeBtn2]&&!shakeOutBtnPressed&&!vexRT[ActArcadeTankBtn]&&!vexRT[ToggleRakeBtn]) {
 		// toggle to SHAKE or NOT SHAKE
 		if (!shakeToggle) shakeToggle=true;
 		if (shakeToggle) shakeToggle=false;
 		shakeOutBtnPressed = true;
-	} else if (!vexRT[Btn8L]&&!vexRT[Btn8R]) {
+	} else if (!vexRT[ActShakeBtn1]&&!vexRT[ActShakeBtn2]) {
 		shakeOutBtnPressed = false;
 	}
 	if (shakeToggle == true) {
@@ -153,7 +176,7 @@ void ShakeParty() {
 }
 
 void Claw() {
-	if (vexRT[Btn5U] && !plusThetaClawBtnPressed) {
+	if (vexRT[ToggleClawBtn] && !plusThetaClawBtnPressed) {
 		if (clawToggle == true) {
 			motor[claw] = clawAngleOpen;
 			clawToggle = false;
@@ -162,14 +185,15 @@ void Claw() {
 			clawToggle = true;
 		}
 		plusThetaClawBtnPressed = true;
-	} else if (!vexRT[Btn5U]) {
+	} else if (!vexRT[ToggleClawBtn]) {
 		plusThetaClawBtnPressed = false;
 	}
 }
+
 void Arm() {		// function for arm and elbow (elbow if configured for Corbin's design)
-	if (vexRT[Btn6D]) {
+	if (vexRT[RightBumpDownBtn]) {											// relative DOWN btn
 		motor[arm] = 127.0;		// moves arm down
-	} else if (vexRT[Btn6U]) {
+	} else if (vexRT[RightBumpUpBtn]) {							// relative UP btn
 		motor[arm] = -127;		// moves arm up
 	} else {
 		motor[arm] = 0;				// stops arm
@@ -202,18 +226,18 @@ void Arm() {		// function for arm and elbow (elbow if configured for Corbin's de
 	*/
 }
 void Rake() {
-	if (vexRT[Btn8D] && !rakeBtnPressed) {
+	if (vexRT[ToggleRakeBtn] && !rakeBtnPressed) {
 		if (rakeToggle == true) {
 			rakeToggle = false;
 		} else if (rakeToggle == false) {
 			rakeToggle = true;
 		}
 		rakeBtnPressed = true;
-	} else if (!vexRT[Btn8D]) {
+	} else if (!vexRT[ToggleRakeBtn]) {
 		rakeBtnPressed = false;
 	}
-	if (rakeToggle) motor[rake] = rakeAngle1;
-	if(!rakeToggle) motor[rake] = rakeAngle2;
+	if (rakeToggle) motor[rake] = rakeAngleClose;
+	if(!rakeToggle) motor[rake] = rakeAngleOpen;
 }
 void ManualControls() {
 	Arm();
@@ -221,15 +245,16 @@ void ManualControls() {
 	Rake();
 	ShakeParty();
 }
+
 void Arcade() {
 	InitRobot();
-	if (abs(vexRT[Ch3] - vexRT[Ch4]) > deadband) {
-		motor[right] = vexRT[Ch3] - vexRT[Ch4];
+	if (abs(vexRT[ArcadeAxisY] - vexRT[ArcadeAxisX]) > deadband) {
+		motor[right] = vexRT[ArcadeAxisY] - vexRT[ArcadeAxisX];
 	} else {
 		motor[right] = 0;
 	}
-	if (abs(vexRT[Ch4] + vexRT[Ch3]) > deadband) {
-		motor[left] = vexRT[Ch4] + vexRT[Ch3];
+	if (abs(vexRT[ArcadeAxisX] + vexRT[ArcadeAxisY]) > deadband) {
+		motor[left] = vexRT[ArcadeAxisX] + vexRT[ArcadeAxisY];
 	} else {
 		motor[left] = 0;
 	}
@@ -237,13 +262,13 @@ void Arcade() {
 }
 void Tank() {
 	InitRobot();
-	if (abs(vexRT[Ch3]) > deadband) { // Checks value of left joystick to see if it's outside of deadband
-		motor[left] = vexRT[Ch3];
+	if (abs(vexRT[TankLeftY]) > deadband) { // Checks value of left joystick to see if it's outside of deadband
+		motor[left] = vexRT[TankLeftY];
 		} else {
 		motor[left] = 0;
 	}
-	if (abs(vexRT[Ch2]) > deadband) {
-		motor[right] = vexRT[Ch2];
+	if (abs(vexRT[TankRightY]) > deadband) {
+		motor[right] = vexRT[TankRightY];
 		} else {
 		motor[right] = 0;
 	}
@@ -276,7 +301,7 @@ void PathFinishedReset() {
 }
 void AlternateAuto() {
 	GetSensorReadout();
-	if (sensorAutoCheck == 1) {
+	if (sensorAutoCheck == 0) {
 		PathFinishedReset();
 	} else {
 		motor[left] = 127;
@@ -289,7 +314,7 @@ void MainAuto() {
 	if (!StartingPathFound) {
 		StartingPathFound = true;
 	} else {
-		if (sensorAutoCheck == 1) {
+		if (sensorAutoCheck == 0) {
 			PathFinishedReset();
 		} else {
 			if (sensorCheck(sensorLeft) && sensorCheck(sensorRight)) {		// If both are detecting black
@@ -299,7 +324,7 @@ void MainAuto() {
 				LeftSpeed = MotorCheck(LeftSpeed, increment);
 				RightSpeed = MotorCheck(RightSpeed, -increment);
 			} else if (!sensorCheck(sensorLeft) && sensorCheck(sensorRight)){	// If only right is detecting black
-				LeftSpeed = MotorCheck(LeftSpeed, -increment);
+				LeftSpeed = MotorCheck(LeftSpeed, increment);
 				RightSpeed = MotorCheck(RightSpeed, increment);
 			} else if (!sensorCheck(sensorLeft) && !sensorCheck(sensorRight)){		// If neither are detecting black
 				LeftSpeed = MotorCheck(LeftSpeed, -increment);
