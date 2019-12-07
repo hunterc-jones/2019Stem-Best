@@ -53,13 +53,15 @@ bool StartingPathFound = false;
 long sensorLeft;
 long sensorRight;
 int sensorAutoCheck;
-float MaxSpeed = 1;					// CONFIG VAL		for setting highest speed robot can increment to during autonomous
+float MaxSpeed = 0.7;					// CONFIG VAL		for setting highest speed robot can increment to during autonomous
 float increment = 0.01;				// CONFIG VAL		for setting the speed robot makes each iteration during autonomou
 float MinSpeed = -MaxSpeed;
 float LeftSpeed;
 float RightSpeed;
 int pushRodCloseAngle = -7;
 int pushRodReleaseAngle = 80;
+int extendArmReset = 500;
+int extendArm;
 
 // Basis Vars
 int driveMode = 0;
@@ -295,7 +297,7 @@ void PathFinishedReset() {
 	motor[left] = 0;
 	motor[right] = 0;
 	motor[pushRod] = 	pushRodReleaseAngle;
-	delay(2000);
+	delay(500);
 	driveMode = 0;
 	setupComplete = false;
 }
@@ -313,7 +315,14 @@ void MainAuto() {
 	GetSensorReadout();
 	if (!StartingPathFound) {
 		StartingPathFound = true;
+		extendArm = extendArmReset;
 	} else {
+		if (extendArm > 0) {
+			motor[arm] = -127;
+			extendArm--;
+		} else {
+			motor[arm] = 0;
+		}
 		if (sensorAutoCheck == 0) {
 			PathFinishedReset();
 		} else {
@@ -324,7 +333,7 @@ void MainAuto() {
 				LeftSpeed = MotorCheck(LeftSpeed, increment);
 				RightSpeed = MotorCheck(RightSpeed, -increment);
 			} else if (!sensorCheck(sensorLeft) && sensorCheck(sensorRight)){	// If only right is detecting black
-				LeftSpeed = MotorCheck(LeftSpeed, increment);
+				LeftSpeed = MotorCheck(LeftSpeed, -increment);
 				RightSpeed = MotorCheck(RightSpeed, increment);
 			} else if (!sensorCheck(sensorLeft) && !sensorCheck(sensorRight)){		// If neither are detecting black
 				LeftSpeed = MotorCheck(LeftSpeed, -increment);
@@ -356,15 +365,18 @@ task main() {
 		switch (driveMode) { // Switch case to allow a varition of inputs to be switched between to fit driver needs and completion of autonomous challenges
 		case 0:
 			Arcade();//Arcade mode is where two analog inputs from one joystick is used
+			StartingPathFound = false;
 			break;
 		case 1:
 			Tank();//Tank mode is where two vertical inputs from two seperate joysticks are converted into motor values
+			StartingPathFound = false;
 			break;
 		case 2:
 			MainAuto();//Arcade mode is where the robot is controled by our sensors. This is the primary arcade mode where the robot is guided by IR drives
 			break;
 		case 3:
 			AlternateAuto();//RalstonValley automatic
+			StartingPathFound = false;
 			break;
 		}
 	}
