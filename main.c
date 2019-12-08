@@ -50,32 +50,35 @@ short TankRightY = Ch2;
 
 // Autonomous Vars
 bool StartingPathFound = false;
+bool isMainAuto;
 long sensorLeft;
 long sensorRight;
 int sensorAutoCheck;
-float MaxSpeed = 0.8;					// CONFIG VAL		for setting highest speed robot can increment to during autonomous
-float increment = 0.01;				// CONFIG VAL		for setting the speed robot makes each iteration during autonomou
+float MaxSpeed = 0.8;																	// CONFIG VAL		for setting highest speed robot can increment to during autonomous
+float increment = 0.01;																// CONFIG VAL		for setting the speed robot makes each iteration during autonomou
 float MinSpeed = -MaxSpeed;
 float LeftSpeed;
 float RightSpeed;
 short pushRodSetupAngle = -14;
 short pushRodClampAngle = -23;
 short pushRodReleaseAngle = 80;
-short extendArmTime = 250;		// CONFIG VAL 	amount of ms the arm goes up to prepare for autonomous
-float autoLeftSpeed = 0.8;		// CONFIG VAL		percentage of left motor speed from 127
-float autoRightSpeed = 1.0;		// CONFIG VAL		percentage of right motor speed from 127
-short autoReleasePushrodTime = 1200; 				// CONFIG VAL
+short extendArmTime = 300;														// CONFIG VAL 	amount of ms the arm goes up to prepare for autonomous
+float autoLeftSpeed = 0.8;														// CONFIG VAL		percentage of left motor speed from 127
+float autoRightSpeed = 1.0;														// CONFIG VAL		percentage of right motor speed from 127
+short autoReleasePushrodTime = 1200; 									// CONFIG VAL
+short alternateautoDriveBackwardTime = 2000;					// CONFIG VAL
+short mainautoDriveBackwardTime = 1000;								// CONFIG VAL
+short alternateautoLeftMotorModifier = 0; 						// CONFIG VAL
 
 // Basis Vars
 int driveMode = 0;
 int rememberWheelDrive;
-//int InitDriverMotorFowardTime = 3000;			// CONFIG VAL									3 seconds (3000 ms)
-bool arcadeToggle = false;				// DEFAULT = TANK
+bool arcadeToggle = false;														// DEFAULT = TANK
 bool setupComplete = false;
 bool arcadeBtnPressed = false;
 bool mainautoBtnPressed = false;
 bool AlternateAutoBtnPressed = false;
-float deadband = 1.0;					// CONFIG VAL to reduce deadband
+float deadband = 1.0;																	// CONFIG VAL to reduce deadband
 
 // Arm, Claw, Rake Vars
 bool clawToggle;
@@ -186,7 +189,7 @@ void Claw() {
 		if (clawToggle == true) {
 			motor[claw] = clawAngleOpen;
 			clawToggle = false;
-		} else if (!clawToggle) {
+		} else if (clawToggle == false) {
 			motor[claw] = clawAngleClose;
 			clawToggle = true;
 		}
@@ -242,8 +245,8 @@ void Rake() {
 	} else if (!vexRT[ToggleRakeBtn]) {
 		rakeBtnPressed = false;
 	}
-	if (rakeToggle) motor[rake] = rakeAngleClose;
-	if(!rakeToggle) motor[rake] = rakeAngleOpen;
+	if (rakeToggle) {motor[rake] = rakeAngleClose; writeDebugStreamLine("CLOSE");}
+	if(!rakeToggle) {motor[rake] = rakeAngleOpen; writeDebugStreamLine("OPEN");}
 }
 void ManualControls() {
 	Arm();
@@ -293,7 +296,6 @@ bool sensorCheck(long sens) {
 	return (sens > 0.5);
 }
 void GetSensorReadout() {
-	setupComplete = false;
 	sensorLeft = SensorValue[LeftSensor];
 	sensorRight = SensorValue[RightSensor];
 	sensorAutoCheck = SensorValue[AutoCheck];
@@ -312,7 +314,13 @@ void PathFinishedReset() {
 	motor[left] = 0;
 	motor[right] = 0;
 	motor[pushRod] = 	pushRodReleaseAngle;
-	delay(autoReleasePushrodTime);				// Auto release pushrod time
+	wait1Msec(autoReleasePushrodTime);					// Auto release pushrod time
+	motor[left] = -127;
+	motor[right] = -127;
+	if (isMainAuto == true) wait1Msec(alternateautoDriveBackwardTime);
+	if (isMainAuto == false) wait1Msec(mainautoDriveBackwardTime);
+	//motor[left] = 0;													// these two lines arent needed since motorVals = arcadeJoystick
+	//motor[right] = 0;
 	driveMode = 0;
 }
 
@@ -321,11 +329,14 @@ void PrepareAuto() {
 	rakeToggle = false;
 	motor[pushRod] = pushRodClampAngle;
 	motor[arm] = -127;
-	delay(extendArmTime);
+	wait1Msec(extendArmTime);
+	motor[arm] = 0;
 }
 
 void AlternateAuto() {
 	GetSensorReadout();
+	setupComplete = false;
+	isMainAuto = false;
 	if (!StartingPathFound) {
 		PrepareAuto();
 		StartingPathFound = true;
@@ -333,7 +344,7 @@ void AlternateAuto() {
 		if (sensorAutoCheck == 0) {
 			PathFinishedReset();
 		} else {
-			motor[left] = 127 -52;
+			motor[left] = 127 + alternateautoLeftMotorModifier;
 			motor[right] = 127;
 		}
 	}
@@ -341,6 +352,8 @@ void AlternateAuto() {
 
 void MainAuto() {
 	GetSensorReadout();
+	setupComplete = false;
+	isMainAuto = true;
 	if (!StartingPathFound) {
 		PrepareAuto();
 		StartingPathFound = true;
